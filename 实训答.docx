@@ -1,0 +1,503 @@
+1、a.对于一个包含100万随机数的数组排序，快速排序比插入排序快多少倍?
+答：	1000000=106  
+　　　插入排序平均效率是n2，快速排序的平均效率是1.39*n*log2 n。
+　　　计算n2/n*log2 n=1012/1.39*106 *log2 106≈36000倍
+　　　b.是非题:对于n>1的n元素数组，是否存在插入排序比快速排序更快的情形?
+答：	插入排序：当n元数组是最优输入，即有序数组的输入效率是n。
+　　　快速排序：对最优输入，效率是n*log2n。
+　　　当n=2时，两种排序理论上一样快。当n>2时，插入排序比快速 排序快。
+　　　对于n>1的n元素数组，在n很小的时候，存在插入排序比快速排序更快的情况。
+　　　
+2、切割木棍问题为下列问题设计一个动态规划算法。已知小木棍的销售价格p,和长度i	相关，i=1,2, **.n, 如何把长度为n的木棍切割为若干根长度为整数的小木棍，使得所能获得的总销售价格最大?该算法的时间效率和空间效率各是多少?
+答：
+#include <iostream>
+#include <cstring>
+using namespace std; //自底向上，两个循环，不用递归；
+
+void main()  {
+		int n;
+		cin>>n;
+		int price[11]={0,1,5,8,9,10,17,17,20,23,28};
+		int *r=new int [n+1];
+		for(int k = 0; k<= n; ++k)
+			r[k] = 0; 
+		for(int i = 1; i <= n; ++i)
+		{          
+			int q = INT_MIN;
+			for(int j = 1; j <= i; ++j)//计算规模为i的最大收益
+			{              
+		if(q < (price[j] + r[i-j]))//因为i>i-j，所以当计算r[i]时，r[i-j]已经解决，可以直接用
+					q = (price[j] + r[i-j]);  
+			}          
+			r[i] = q;  //找出i这个位置的最优解；
+		}
+		cout<<r[n];  //n米长的木头的最大价值。
+	} 
+
+
+时间复杂度是O(n*i),空间复杂度是O(n)
+
+
+3、对于背包问题的自底向上动态规划算法，请证明:
+　　　a.它的时间效率属于B(nF).
+　　　b.它的空间效率属于e(nW).
+　　　e.从一张填好的动态规划表中求得最优子集的组合所用的时间属于O(n)。
+答：背包问题的动态规划解法递归方程为：
+　　F(i, j) = max { F(i-1, j), F(i-1, j-wi) + vi };		j >= wi
+　　F(i, j) = F(i-1, j)							j < wi
+　　伪代码
+function BeiBao()
+    for i ? 0 to n do
+        K[i][0] ? 0
+    for j ? 1 to W do
+        K[0][j] ? 0
+    for i ? 1 to n do
+        for j ? 1 to W do
+            if j < wi then
+                K[i][j] ? K[i-1][j]
+            else
+                K[i][j] ? max(K[i-1][j], K[i-1][j-wi]+vi)
+return K[n][W]
+　　通过递归方程和伪代码计算F(i, j)值花费常量时间。
+　　　（1）（2）显然算法空间复杂度与时间复杂度均为Θ（nW）。其中W为背包容量
+　　　（3）为了确定一个最优子集的组成，该算法重复比较前一行中不超过两个单元格的值。因此，其时间效率类为O(n)。因为基本操作是比较“j < wi”。它被执行了n*w次。
+
+4、矩阵连乘考虑如何使得在计算n个矩阵的乘积A A**A.时，总的乘法次数最小这些矩阵	的维度分别为d,xd, d,xd, ... d,xd,. 假设所有两个矩阵的中间乘积都使用蛮力算法(基于定义)计算。
+　　　a.给出一个三个矩阵连乘的例子，当分别用(A142)Mj和A(424)计算时，它们的乘法次数至少相差1000倍.
+　　　b.有多少种不同的方法来计算n个矩阵的连乘乘积?
+　　　c.设计-个求n个矩阵乘法最优次数的动态规划算法。
+答：	a.计算三个矩阵连乘{A1，A2，A3}；维数分别为10*100 , 100*5 , 5*50
+	按此顺序计算需要的次数（（A1*A2）*A3）:10X100X5+10X5X50=7500次
+	按此顺序计算需要的次数（A1*（A2*A3））:10X5X50+10X100X50=75000次
+　　　它们的乘法次数相差1000倍
+b.两种，蛮力算法和动态规划。
+C.
+代码：
+#include <stdio.h> //矩阵连乘
+#include <iostream>
+#include <fstream>
+#include <string.h>
+using namespace std;
+
+const int L = 7;
+
+int RecurMatrixChain(int i,int j,int **s,int *p);//递归求最优解
+
+void Traceback(int i,int j,int **s);//构造最优解
+
+int main()
+{
+    int p[L]={10,20,30,15,25,35,40};//矩阵A1...A6
+    printf("矩阵A1到A6：");
+    for(int z=0;z<L;z++)
+       printf("%d  ",p[z]);
+	printf("\n");
+    int **s = new int *[L];
+
+    for(int i=0;i<L;i++)
+
+        s[i] = new int[L];
+
+    cout<<"矩阵的最少计算次数为："<<RecurMatrixChain(1,6,s,p)<<endl;
+
+    cout<<"矩阵最优计算次序为："<<endl;
+
+    Traceback(1,6,s);
+
+    return 0;
+
+}
+
+int RecurMatrixChain(int i,int j,int **s,int *p)
+
+{
+
+    if(i==j) return 0;
+
+    int u = RecurMatrixChain(i,i,s,p)+RecurMatrixChain(i+1,j,s,p)+p[i-1]*p[i]*p[j];
+
+    s[i][j] = i;
+
+    for(int k=i+1; k<j; k++)
+
+    {
+
+        int t = RecurMatrixChain(i,k,s,p) + RecurMatrixChain(k+1,j,s,p) + p[i-1]*p[k]*p[j];
+
+        if(t<u)
+
+        {
+
+            u=t;
+
+            s[i][j]=k;
+
+        }
+
+    }
+
+    return u;
+
+}
+
+void Traceback(int i,int j,int **s)
+
+{
+
+    if(i==j) return;
+
+    Traceback(i,s[i][j],s);
+
+    Traceback(s[i][j]+1,j,s);
+
+    cout<<"Multiply A"<<i<<","<<s[i][j];
+
+    cout<<" and A"<<(s[i][j]+1)<<","<<j<<endl;
+
+}
+
+
+
+5、遥言传播 有n个人，每个人都拥有不同的谣言。通过发电子信息，他们想互相共享所	有的谣言。假定发送者会在信息中包含他已知的所有谣言，而且一-条信息只有一个收	信人。设计- -个贪心算法，保证在每个人都能获得所有谣言的条件下，使发送的信息数最小。
+
+答：	将这n个人标记为1, 2, …, n，按照1发信给2, 2发信给3, 3发信给4，…，	n-1发信给n	的方式，基于每次发信都使得当前收信人掌握的谣言更多，最后	n将掌握所有的谣言，由n将所有谣言发送给其他n-1个人。
+　　　如果n=2,需要两次
+　　　如果n=3，需要四次
+　　　如果n=4，需要六次
+　　　如果n=5，需要八次
+　　　归纳法可得出2n-2，所以2n-2为最小发信息数。
+
+6、a.写一个程序，为给定的英文文本构造一套哈夫曼编码， 并对该文本编码。
+ #include<iostream>
+  #include<stdio.h>
+  #include<string>
+  #include<cstring>
+  #include<algorithm>
+  #define MAX 0x3f3f3f3f 
+ using namespace std;
+ 
+ typedef struct
+ {
+    char data;
+     int weight;
+      int parent;
+     int lchild;
+     int rchild;
+     bool tag;
+ }Huffnode,*HuffmanTree;
+ typedef struct
+ {
+     string *code;
+     char *data;
+      int num;
+ }HuffmanCode;
+ void DisplayHuffmanCode(HuffmanCode &HC,int n)
+ {
+     for(int i=0;i<n;++i)
+     {
+         cout<<HC.code[i]<<endl;
+     }
+ }
+ void Select(HuffmanTree &HT,int index, int &s1, int &s2)
+ {
+     int min1=MAX;
+    int min2=MAX;
+    for(int i=1;i<=index;++i)
+     {
+         if(HT[i].parent==0&&HT[i].tag)
+         {
+              if(HT[i].weight<min1)
+              {
+                  s1=i;
+                  min1=HT[i].weight;
+              }
+         }
+     }
+      HT[s1].tag=0;
+      for(int s=1;s<=index;++s)
+      {
+         if(HT[s].parent==0&&HT[s].tag)
+          {
+             if(HT[s].weight<min2)
+              {
+                  s2=s;
+                  min2=HT[s].weight;
+              }
+          }
+      }
+      HT[s2].tag=0; 
+  }
+  void CreatHuffmanTree(HuffmanTree &HT,int n)
+  {
+      if(n<=1)return;
+      int m=2*n-1;
+      HT=new Huffnode[m+1];
+  
+      for(int i=1;i<=m;++i)
+      {
+          HT[i].lchild=0;
+          HT[i].rchild=0;
+          HT[i].parent=0;
+          HT[i].tag=1;
+          HT[i].data='\0';
+      }
+      cout<<"请依次输入每一个字和它的权重："<<endl;
+      for(int s=1;s<=n;++s)
+      {
+          scanf("%c",&HT[s].data);
+         getchar();
+          scanf("%d",&HT[s].weight);
+          getchar();
+      }
+  
+      int s1,s2;
+      for(int z=n+1;z<=m;++z)      
+      {
+          Select(HT,z-1,s1,s2);
+          HT[s1].parent=z;
+          HT[s2].parent=z;  
+          HT[z].lchild=s1;    
+          HT[z].rchild=s2; 
+          HT[z].weight=HT[s1].weight + HT[s2].weight;
+      }
+  }
+  void CreatHuffmanCode(HuffmanTree HT, HuffmanCode &HC, int n)
+  {
+  
+      HC.code=new string[n+1];
+      HC.data=new char[n+1];
+      HC.num=n+1;
+      
+     for(int i=1; i<=n; ++i)
+     {
+         int c=i; 
+         int f=HT[i].parent;
+         string cd="";
+         while(f!=0)
+         {
+              if (HT[f].lchild==c)  
+              {
+                  cd+="0";
+              }
+              else 
+              {
+                  cd+="1";
+              }
+              c=f;
+              f=HT[f].parent;
+         }     
+         reverse(cd.begin(),cd.end());
+         HC.code[i]=cd;
+      }
+       cout<<"当前的哈夫曼编码表为："<<endl;
+      for(int x=1;x<=n;++x)
+       {
+           HC.data[x]=HT[x].data;
+           cout<<x<<" | "<<HC.data[x]<<" | "<<HC.code[x]<<endl;
+           
+       }
+ } 
+ void Encoding(HuffmanCode HC,string str)
+ {
+     cout<<"编码结果为："<<endl; 
+     for(int i=0;i<str.length();++i)
+    {
+         for(int j=1;j<=HC.num;++j)
+         {
+             if(HC.data[j]==str[i])
+             {
+                 cout<<HC.code[j];
+                 break; 
+            }
+        }
+        
+      } 
+ }
+ void Decoding(HuffmanCode HC,string str)
+ {
+     cout<<"解码结果为："<<endl; 
+     string temp="";
+    int postion=0;
+     for(int i=0;i<str.length();)
+     {
+        for(int j=1;j<=HC.num;++j)
+        {
+             int k=0;
+             for(;k<HC.code[j].length();++k)
+             {
+                 if(HC.code[j][k]!=str[i+k])
+                 {
+                     break;
+                 }
+             }
+             if(k==HC.code[j].length())
+             {
+                 i+=HC.code[j].length();
+                 cout<<HC.data[j];
+                 break;
+             }
+         }
+      } 
+ }
+ int main()
+ {
+     HuffmanTree HT;
+     HuffmanCode HC;
+     //构造赫夫曼树，输出各字符的赫夫曼编码
+     cout<<"\n请输入编码的个数："<<endl;
+     int n=0;
+     cin>>n; 
+     getchar();
+     CreatHuffmanTree(HT,n);
+     CreatHuffmanCode(HT,HC,n);
+     // 编码：输入字符序列，输出对应的赫码序列。
+     cout<<"\n请输入要编码的字符："<<endl;
+     string e_str="";
+     getline(cin,e_str);
+     Encoding(HC,e_str);
+     // 译码：输入赫夫曼码序列，输出原始字符代码。
+     cout<<"\n请输入要解码的字符："<<endl;
+     string d_str="";
+     getline(cin,d_str);
+     Decoding(HC,d_str);
+      
+ }
+　　　
+　　　b.写-个程序，对一段用哈夫曼码编码的英文文本进行解码。
+　　　e.做一个实验，测试对包含1000个词的-段英文文本进行哈夫曼编码时，典型的压缩率	位于什么样的区间。
+　　　d.对编码程序做一个实验，测试如果用标准的估计频率代替英文文本中字符的实际出现	频率，该程序的压缩率会有什么样的变化。
+
+
+
+哈夫曼编码，先将英文文本构造一棵哈夫曼树，使树的左边分支标记为0，树的右边分支标记为1，每一个编码都是由根结点到该结点的分支标记组成的，即一串0和1的组合，并且每一个编码都不是其他所有编码的前缀编码。
+
+7、用回溯法生成{1, 2, 3, 4}的所有接列。
+#include <iostream>
+using namespace std;
+ 
+ 
+void swap(int arr[], int i, int j)
+{
+    int tmp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = tmp;
+}
+ 
+void FullSort(int arr[], int start, int end)
+{
+    if(start == end)
+    {
+	for(int i = 0; i <= end; i++)
+	{
+	    cout << arr[i] << " ";
+	}
+	cout << endl;
+	return;
+    }
+    
+    else
+    {
+	for(int i = start; i <= end; i++)
+	{
+	    cout << "i = " << i << endl;
+	    swap(arr, i, start);
+	    cout << "arr[start] = " << arr[start] << endl;
+	    FullSort(arr, start+1, end);
+	    swap(arr, i, start);
+	}
+    }
+}
+ 
+int main()
+{
+    int arr[] = {1,2,3,4};
+    //cout << sizeof(arr) / sizeof(arr[0]) << " ";
+    FullSort(arr, 0, sizeof(arr) / sizeof(arr[0]) - 1);
+}
+
+
+
+
+8、写一个程序用分支界限算法对背包问题求解。
+01背包问题
+#include<iostream>
+#include<stack>
+using namespace std;
+#define N 100
+class
+HeapNode //定义HeapNode结点类
+{
+public:
+double upper,price,weight;//upper为结点的价值上限，price是结点所对应的价值，weight为结点所相应的重量
+int level,x[N];//活节点在子集树中所处的层序号
+};
+double MaxBound(int i);
+double Knap();
+void AddLiveNode(double up,double cp,double cw,bool ch,int level);
+stack<HeapNode>
+High;//最大队High
+double w[N],p[N];//把物品重量和价值定义为双精度浮点数
+double cw,cp,c=30;//cw为当前重量，cp为当前价值，定义背包容量为30
+int n=3;//货物数量为3
+int main()
+{
+	cout<<"请按照顺序输入3个物品的重量："<<endl;
+	int i;
+	for(i=1;i<=n;i++)
+		cin>>w[i];//输入3个物品的重量
+	cout<<"请按顺序输入3个物品的价值："<<endl;
+	for(i=1;i<=n;i++)
+		cin>>p[i];//输入3个物品的价值
+	cout<<"最大价值为：";
+	cout<<Knap()<<endl;//调用Knap函数，输出最大价值
+	return 0;
+}
+double MaxBound(int j)//MaxBound函数求最大上限
+{
+	double
+		left=c-cw,b=cp;//剩余容量和价值上限
+	while(j<=n&&w[j]<=left)//以物品单位重量价值递减装填剩余容量
+	{
+		left-=w[j];
+		b+=p[j];
+		j++;
+	}
+	if(j<=n)
+		b+=p[j]/w[j]*left;//装填剩余容量装满背包
+	return b;
+}
+void AddLiveNode(double up,double cp,double cw,bool ch,int lev)//将一个新的活结点插入到子集数和最大队High中
+{
+	HeapNode be;
+	be.upper=up;
+	be.price=cp;
+	be.weight=cw;
+	be.level=lev;
+	if(lev<=n)
+		High.push(be);//调用stack头文件的push函数
+}
+double Knap()//优先队列分支界限法，返回最大价值，bestx返回最优解
+{
+	int i=1;cw=cp=0;double bestp=0,up=MaxBound(1);//调用MaxBound求出价值上限，best为最优值
+	while(1)//非叶子结点
+	{
+		double wt=cw+w[i];
+		if(wt<=c)//左儿子结点为可行结点
+		{
+			if(cp+p[i]>bestp) bestp=cp+p[i];
+				AddLiveNode(up,cp+p[i],cw+w[i],true,i+1);
+		}
+		up=MaxBound(i+1);
+			if(up>=bestp)//右子树可能含最优解
+				AddLiveNode(up,cp,cw,false,i+1);
+			if(High.empty()) return bestp;
+			HeapNode node=High.top();//取下一扩展结点
+			High.pop();
+			cw=node.weight;
+			cp=node.price;
+			up=node.upper;
+			i=node.level;
+		}
+	}
+
+
